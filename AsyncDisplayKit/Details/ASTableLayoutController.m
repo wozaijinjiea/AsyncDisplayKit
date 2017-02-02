@@ -120,12 +120,7 @@
 
 - (nullable NSIndexPath *)lastIndexPathInTableView
 {
-  NSInteger sectionCount = _tableView.numberOfSections;
-  if (sectionCount == 0) {
-    return nil;
-  }
-
-  NSInteger lastSectionWithAnyRows = sectionCount;
+  NSInteger lastSectionWithAnyRows = _tableView.numberOfSections;
   NSInteger rowCount = 0;
   while (rowCount == 0) {
     lastSectionWithAnyRows -= 1;
