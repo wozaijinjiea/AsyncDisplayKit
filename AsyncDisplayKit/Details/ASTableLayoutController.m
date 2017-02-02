@@ -69,14 +69,15 @@
 {
   CGFloat targetY = distance + CGRectGetMidY([_tableView rectForRowAtIndexPath:start]);
 
-  // Beyond top of content.
-  if (targetY < 0) {
-    return [NSIndexPath indexPathForRow:0 inSection:0];
+  // Before first row.
+  NSIndexPath *firstIndexPath = [self firstIndexPathInTableView];
+  if (targetY <= CGRectGetMaxY([_tableView rectForRowAtIndexPath:firstIndexPath])) {
+    return firstIndexPath;
   }
 
-  // Beyond last row.
+  // After last row.
   NSIndexPath *lastIndexPath = [self lastIndexPathInTableView];
-  if (targetY > CGRectGetMaxY([_tableView rectForRowAtIndexPath:lastIndexPath])) {
+  if (targetY >= CGRectGetMinY([_tableView rectForRowAtIndexPath:lastIndexPath])) {
     return lastIndexPath;
   }
 
@@ -116,6 +117,17 @@
     i = 0;
   }
   return result;
+}
+
+- (nullable NSIndexPath *)firstIndexPathInTableView
+{
+  NSInteger sectionCount = _tableView.numberOfSections;
+  for (NSInteger s = 0; s < sectionCount; s++) {
+    if ([_tableView numberOfRowsInSection:s] > 0) {
+      return [NSIndexPath indexPathForRow:0 inSection:s];
+    }
+  }
+  return nil;
 }
 
 - (nullable NSIndexPath *)lastIndexPathInTableView
