@@ -67,19 +67,32 @@
 
 - (NSIndexPath *)findIndexPathAtDistance:(CGFloat)distance fromIndexPath:(NSIndexPath *)start
 {
-  CGFloat startY = CGRectGetMidY([_tableView rectForRowAtIndexPath:start]);
+  CGFloat targetY = distance + CGRectGetMidY([_tableView rectForRowAtIndexPath:start]);
+
+  // Beyond top of content.
+  if (targetY < 0) {
+    return [NSIndexPath indexPathForRow:0 inSection:0];
+  }
+
+  // Beyond last row.
+  NSIndexPath *lastIndexPath = [self lastIndexPathInTableView];
+  if (targetY > CGRectGetMaxY([_tableView rectForRowAtIndexPath:lastIndexPath])) {
+    return lastIndexPath;
+  }
+
   static CGFloat kInitialRowSearchHeight = 100;
   /**
    * There may not be a row at any given EXACT point, for these possible reasons:
    * - There is a section header/footer at that point.
-   * - That point is beyond the start/end of the table content.
+   * - That point is beyond the start/end of the table content. (Handled above)
    *
    * Solution: Make a target rect, starting at height 100, and if we don't
    * find any rows, keep doubling its height and searching again. In practice,
-   * this will virtually always find 
+   * this will virtually always find a row on the first try (unless you have a 
+   * section header more than 100 tall and we land near the middle.)
    */
   NSIndexPath *result = nil;
-  for (CGRect targetRect = CGRectMake(0, startY, 1, kInitialRowSearchHeight);
+  for (CGRect targetRect = CGRectMake(0, targetY, 1, kInitialRowSearchHeight);
        result == nil;
        targetRect = CGRectInset(targetRect, 0, -CGRectGetHeight(targetRect) / 2.0)) {
     result = [_tableView indexPathsForRowsInRect:targetRect].firstObject;
@@ -103,6 +116,25 @@
     i = 0;
   }
   return result;
+}
+
+- (nullable NSIndexPath *)lastIndexPathInTableView
+{
+  NSInteger sectionCount = _tableView.numberOfSections;
+  if (sectionCount == 0) {
+    return nil;
+  }
+
+  NSInteger lastSectionWithAnyRows = sectionCount;
+  NSInteger rowCount = 0;
+  while (rowCount == 0) {
+    lastSectionWithAnyRows -= 1;
+    if (lastSectionWithAnyRows < 0) {
+      return nil;
+    }
+    rowCount = [_tableView numberOfRowsInSection:lastSectionWithAnyRows];
+  }
+  return [NSIndexPath indexPathForRow:rowCount - 1 inSection:lastSectionWithAnyRows];
 }
 
 @end
